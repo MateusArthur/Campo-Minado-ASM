@@ -7,14 +7,12 @@ main:
 	la 	a0, vetor1
 	li 	a1, 8
 	li 	a2, 0
-	#jal	swap
-	jal	shift
-	
+	jal	swap
+
 	la 	a0, vetor2
 	li 	a1, 5
 	li 	a2, 1
-	#jal	swap
-	jal	shift
+	jal	swap
 
 	li 	a7, 10   # chamada de sistema para encerrar programa
 	ecall 
@@ -42,6 +40,4 @@ swap:
 	
 	ret
 	
-shift:
-
-	ret
+	
