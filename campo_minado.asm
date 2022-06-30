@@ -9,6 +9,7 @@ hifen: 			.asciz		"-"
 bomba:              	.asciz     	" 9"
 novalinha:	    	.asciz		"\n"
 novabarra:	    	.asciz		"|"
+countColuna 		.asciz 		" 0 1 2 3 5 6 7 8 9"
 
 campo:                          # Matriz controle campo minado 
         .word   0,0,0,0,0,0,0,0,0,0,0,0

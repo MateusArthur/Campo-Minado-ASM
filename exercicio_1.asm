@@ -1,19 +1,20 @@
 	.data
 vetor1:	.word	9, 8, 7, 6, 5, 4, 3, 2, 1
 vetor2: .word	-10, 8, 11, 16, 15, -6, 22
-
 	.text
 	
 main:
 	la 	a0, vetor1
 	li 	a1, 8
 	li 	a2, 0
-	jal	swap
+	#jal	swap
+	jal	shift
 	
 	la 	a0, vetor2
 	li 	a1, 5
 	li 	a2, 1
-	jal	swap
+	#jal	swap
+	jal	shift
 
 	li 	a7, 10   # chamada de sistema para encerrar programa
 	ecall 
@@ -21,64 +22,26 @@ main:
 #####################################
 # Implemente a função abaixo
 swap:
-	add s5, zero, a0
-	add s0, zero, zero #contador para o indice do vetor
-	add s1, zero, zero #variavel para ver quantas posicoes mover para chegar no inicio do laco
-	add a3, s0, zero  #contador do laco
-	add a0, a0, s1
-	addi a7, zero, 9 #armazena ultima pos
-	j percorre
+	add t0, zero, a0 # armazenar em t0 a posicao inicial de a0
+	addi a3, zero, 4 # carregar 4 em a a3
+	
+	# encotrar valor de a2 e posicao no vetor
+	mul a5, a2, a3 # multiplica a2 por a3 (4 Bits) para pegar a posicao na memoria de a2
+	add t0, t0, a5 # adiciona a5 no vetor para ir para a posicao de a2
+	lw s2, 0(t0) # carregar valor de a2 em s2
+	
+	# encontrar valor a1 e posicao no vetor
+	mul a4, a1, a3 # multiplica a1 por a3 (4) para pegar a posicao de a1
+	add a0, a0, a4 # adiciona a4 no vetor para ir para a posicao de a1
+	lw s1, 0(a0) # carregar valor de a1 em s1
+	
+	sw s2, (a0)  # colocar valor de a2 em a1
+	
+	add a0, zero, t0 # carregar a posicao de memoria de a2 no vetor a0
+	sw s1, (a0) # salvar em a1 em a2
+	
+	ret
+	
+shift:
 
-percorre:
-	lw t2, 0(a0) #carrega valor atual do vetor em t2 (p/ vizualizar)
-	beq s0, a7, newloop
-	beq s0, a1, salvarvalor # verfica se o id do indice e o mesmo que estamos procurando
-	beq s0, a2, salvarvalor2 # verfica se o id do indice e o mesmo que estamos procurando
-	addi s0, s0, 1 # Contador + 1
-	addi s1, zero, 4 # Auxiliar da posicao + 4
-	add a0, a0, s1 # Pessa a proxima posicao do vetor (i++)
-	j percorre
-	
-newloop:
-	add a0, zero, s5 # voltar para o inicio do vetor
-	add s0, zero, zero #contador para o indice do vetor
-	add s1, zero, zero #variavel para ver quantas posicoes mover para chegar no inicio do laco
-	add a3, s0, zero  #contador do laco
-	add a0, a0, s1
-	add a5, zero, a4 #Armazenar qual indice quer encontrar
-	j percorre
-	
-loop:
-	addi s0, s0, 1 # Contador + 1
-	addi s1, zero, 4 # Auxiliar da posicao + 4
-	lw t0, 0(a0) #carrega valor atual do vetor em t0
-	beq t0, a5, substituir # verfica se o id do indice e o mesmo que estamos procurando
-	add a0, a0, s1 # Pessa a proxima posicao do vetor (i++)
-	j loop
-	
-salvarvalor:
-	lw t0, 0(a0) #carrega valor atual do vetor em t0
-	add a4 zero, t0 # Armazenar valor de t0 em a4
-	addi s0, s0, 1 # Contador + 1
-	addi s1, zero, 4 # Auxiliar da posicao + 4
-	add a0, a0, s1 # Pessa a proxima posicao do vetor (i++)
-	j percorre
-
-
-salvarvalor2:
-	lw t0, 0(a0) #carrega valor atual do vetor em t0
-	add a6, zero, t0 # Armazenar valor em a6
-	addi s0, s0, 1 # Contador + 1
-	addi s1, zero, 4 # Auxiliar da posicao + 4
-	add a0, a0, s1 # Pessa a proxima posicao do vetor (i++)
-	j percorre
-	
-
-substituir:
-	sw a5, (a0) # substitui o valor no vetor
-	beq a5, a6, fim # Verifica se o ultimo valor adicionado foi a6
-	add a5, zero, a6 # Adicione a 6
-	j loop
-	
-fim: 
 	ret
