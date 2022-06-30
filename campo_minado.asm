@@ -1,43 +1,37 @@
 # ALUNO: MATEUS ARTHUR MARCHIORI ROCHA
 
 	.data
-nivel:			.asciz		"\nDigite o nivel entre: 8/10/12 (Tamanho do tabuleiro): "
-nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valid0! [8/10/12]"
+nivel:			.asciz		"\nEscolha um nivel:\n1 - 5x5\n2 - 7x7\n3 - 9x9\nDigite qual deseja: "
+nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido! [8/10/12]"
 mostrarCampo:       	.asciz		"\nSeu campo minado:\n"
 espaco:             	.asciz     	" "
 hifen: 			.asciz		"-"
 bomba:              	.asciz     	" 9"
 novalinha:	    	.asciz		"\n"
 novabarra:	    	.asciz		"|"
-countColuna 		.asciz 		" 0 1 2 3 5 6 7 8 9"
+countColuna: 		.asciz 		" 0 1 2 3 5 6 7 8 9\n"
 
 campo:                          # Matriz controle campo minado 
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0
 
 matrizUsuario:                  # matriz interface
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
         
 	.text
 	
@@ -52,18 +46,28 @@ main:
         ecall                      # Imprime para usuario digitar tamanhao campo
         add a1, zero, a0	   # Adiciona valor inserido pelo usuario em a1
         
-        addi a3, zero, 8           # adicione 8 no a3 para verificar dps
-        beq a1, a3, else           # verifica se dificuldade e 8
-        addi a3, zero, 10          # adicione 10 no a3 para verificar dps
-        beq a1, a3, else           # verifica se dificuldade e 10
-        addi a3, zero, 12	   # adicione 12 no a3 para verificar dps
-        beq a1, a3, else           # verifica se dificuldade e 12
+        addi a3, zero, 1           #
+        beq a1, a3, tamanho5x5     # verifica se dificuldade e 5
+        addi a3, zero, 2           # 
+        beq a1, a3, tamanho7x7     # verifica se dificuldade e 7
+        addi a3, zero, 3	   # 
+        beq a1, a3, tamanho9x9     # verifica se dificuldade e 10
         li  t0, 4                  # define operacao de chamada
         la  a0, nivelInvalido      # imprime nivel invalido
         li a7, 4		   # preapara para imprimir uma string
         ecall                      # imprime a string
         j main                     # volta para main pois tamanho e invalido
 
+tamanho5x5:
+	addi a1, zero, 5	   # carregar campos de acordo com nivel escolhido
+	j else
+
+tamanho7x7:
+	addi a1, zero, 7
+	j else
+	
+tamanho9x9:
+	addi a1, zero, 9
 else:                       	  # se nivel valido
         add a3, zero, zero        # seta a3 como controle de fim do jogo
         la a0, campo              # referencia da matriz campo 
@@ -76,7 +80,21 @@ print_hifen:
         ecall		          # imprime a string
 	j for2
         
+print_colunas:
+	li t0, 4                   # seta valor de operacao para string
+        la a0, espaco              # carrega string
+        li a7, 4		   # preparar para imprimir uma string
+        ecall		           # imprime a string
         
+        bge s10, a1, continuar_mostrac
+        add a0, zero, s10         # coloca em a0 o id da coluna atual
+        li a7, 1		  # preparar para imprimir um int
+        ecall		          # imprime um int
+        
+        addi s10, s10, 1	  # soma +1 na coluna
+        
+        j print_colunas		  # comeca de novo
+
 mostra_campo:
 	add s4, a0, zero          # salva endereco da matriz campo
         li  t0, 4                 # define operacao de chamada
@@ -85,7 +103,27 @@ mostra_campo:
         li a7, 4		  # preparar para imprimir uma string
         ecall		          # imprime a string
         
+        li t0, 4                   # seta valor de operacao para string
+        la a0, espaco              # carrega string
+        li a7, 4		   # preparar para imprimir uma string
+        ecall		           # imprime a string
+        
+        add s10, zero, zero	   # carregar s10
+        jal print_colunas
+        
+continuar_mostrac:
+
+	# imprime nova linha
+        li t0, 4                   # seta valor de operação para string
+        la a0, novalinha           # carrega string
+        li a7, 4		   # preparar para imprimir uma string
+        ecall		           # imprime a string
+        
         add t2, zero, zero        # reseta variavel linhas
+        
+        add a0, zero, t2           # carrega um inteiro
+        li a7, 1		   # preparar para imprimir uma string
+        ecall		           # imprime a string
 
 for:
         addi t3, zero, -1         # reseta variavel colunas
@@ -95,7 +133,7 @@ for2:
         addi t3, t3, 1            # aumenta contador de colunas
         beq t3, a1, exit1         # verifica fim do for2
 	
-	addi a6, zero, 12
+	addi a6, zero, 9
         mul s1, t2, a6            # posicao_matriz = y (linhas) * ordem da matriz (12)
         add s1, s1, t3            # posicao_matriz += x (colunas)
         
@@ -116,8 +154,8 @@ for2:
         addi a6, zero, 1
         bne a3, a6, if20   
         
-        addi a6, zero, 12     
-        bne t5, a6, if20            # verifica se a posicao da matriz campo[x1][y1] == 12
+        addi a6, zero, 9     
+        bne t5, a6, if20            # verifica se a posicao da matriz campo[x1][y1] == 9
 
         li t0, 4                   # define operacao de chamada
         la a0, bomba               # imprime valor 9 (bomba)
@@ -136,7 +174,7 @@ if20:
         ecall			   # imprime uma string
 
 if21:
-         # imprime as posicoes
+        # imprime as posicoes
         li t0, 1                   # seta valor de operacao
         add a0, s3, zero           # salva valor de s3 em a0 para ser impresso
         addi a6, zero, -1          # adicionar -1 em a6 para verificar dps
@@ -158,7 +196,14 @@ exit1:
         la a0, novalinha           # carrega string
         li a7, 4		   # preparar para imprimir uma string
         ecall		           # imprime a string
+        
         addi t2, t2, 1             # aumenta contador de linha
+        
+        bge t2, a1, for
+        add a0, zero, t2           # carrega um inteiro
+        li a7, 1		   # preparar para imprimir uma string
+        ecall		           # imprime a string
+        
         j for                      # volta para for
  
 exit:

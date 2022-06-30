@@ -46,7 +46,6 @@ fim:
 	j parte2
 		
 inicializa_vetor:
-	add s5, zero, a0
 	add s0, zero, zero #contador para o indice do vetor
 	add s1, zero, zero #variavel para ver quantas posicoes mover para chegar no inicio do laco
 	add a3, s0, zero  #contador do laco
