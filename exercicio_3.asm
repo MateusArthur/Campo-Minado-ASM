@@ -24,7 +24,7 @@ final:
 	ecall 
 	
 #####################################
-# Implemente a função abaixo	
+# Implemente a função abaixo
 ordena:
 	lw a2, 0(a0) # Define o primeiro como menor
 	
@@ -41,22 +41,23 @@ percorre_vetor:
 	beq s0, a7, fim # if(s0 = 9)
 	addi s1, zero, 4 # Auxiliar da posicao + 4
 	add a0, a0, s1 # Passa para a proxima posicao do vetor
+	add a2, zero, t2 # a2 e maior que t2 entao pega o valor dele para comparar no proximo
 	j percorre_vetor # volta do inicio
 
 trocar:
-	sw a2, 0(a0)
-	sw t2, -4(a0)
-	add a1, zero, a0
+	sw a2, 0(a0)	# carregar a2 (maior) na posicao atual do vetor
+	sw t2, -4(a0)	# carregar t2 (menor) na posicao atual 4 bits para esquerda do vetor
+	add a1, zero, a0 # resetar valores	
 	add a2, zero, t2
 	add s2, zero, s0
 
 percorre_esq:
-	beqz s2, voltar_info
+	beqz s2, voltar_info # se s2 for igual a zero volte para o loop e substitua o valor atual do vetor
 	addi s2, s2, -1 # i--
 	addi s3, zero, -4 # Auxiliar da posicao + 4
 	add a1, a1, s3 # Passa para a posicao anterior posicao do vetor
 	lw t2, 0(a1) # t2 = a1[i]
-	blt a2, t2, trocar_esq 
+	blt a2, t2, trocar_esq # Trocar pois a2 e menor que t2
 	beqz s2, voltar_info
 	j percorre_esq
 	
@@ -70,7 +71,7 @@ voltar_info:
 	lw a2, 0(a0)
 	j percorre_vetor
 	
-fim:
+fim: # Tratamento de retorno para a main
 	addi s10, s10, 1
 	addi s8, zero, 1
 	addi s9, zero, 2

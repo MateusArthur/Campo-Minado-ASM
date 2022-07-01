@@ -2,14 +2,13 @@
 
 	.data
 nivel:			.asciz		"\nEscolha um nivel:\n1 - 5x5\n2 - 7x7\n3 - 9x9\nDigite qual deseja: "
-nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido! [8/10/12]"
+nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido: (1) - 5x5 ou (2) - 7x7 ou (3) - 9x9!"
 mostrarCampo:       	.asciz		"\nSeu campo minado:\n"
 espaco:             	.asciz     	" "
 hifen: 			.asciz		"-"
 bomba:              	.asciz     	" 9"
 novalinha:	    	.asciz		"\n"
 novabarra:	    	.asciz		"|"
-countColuna: 		.asciz 		" 0 1 2 3 5 6 7 8 9\n"
 
 campo:                          # Matriz controle campo minado 
         .word   0,0,0,0,0,0,0,0,0
@@ -22,7 +21,7 @@ campo:                          # Matriz controle campo minado
         .word   0,0,0,0,0,0,0,0,0
         .word   0,0,0,0,0,0,0,0,0
 
-matrizUsuario:                  # matriz interface
+interface:                  # matriz interface
         .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
         .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
         .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
@@ -52,6 +51,7 @@ main:
         beq a1, a3, tamanho7x7     # verifica se dificuldade e 7
         addi a3, zero, 3	   # 
         beq a1, a3, tamanho9x9     # verifica se dificuldade e 10
+        
         li  t0, 4                  # define operacao de chamada
         la  a0, nivelInvalido      # imprime nivel invalido
         li a7, 4		   # preapara para imprimir uma string
@@ -63,22 +63,23 @@ tamanho5x5:
 	j else
 
 tamanho7x7:
-	addi a1, zero, 7
+	addi a1, zero, 7	  # carregar campos de acordo com nivel escolhido
 	j else
 	
 tamanho9x9:
-	addi a1, zero, 9
+	addi a1, zero, 9	  # carregar campos de acordo com nivel escolhido
+	
 else:                       	  # se nivel valido
         add a3, zero, zero        # seta a3 como controle de fim do jogo
         la a0, campo              # referencia da matriz campo 
-        la a2, matrizUsuario      # referencia da matriz usuario
+        la a2, interface          # referencia da matriz interface
         jal mostra_campo      	  # printa campo minado
         
 print_hifen:
 	la a0, hifen              # carrega string
         li a7, 4		  # preparar para imprimir uma string
         ecall		          # imprime a string
-	j for2
+	j for_coluna
         
 print_colunas:
 	li t0, 4                   # seta valor de operacao para string
@@ -86,22 +87,22 @@ print_colunas:
         li a7, 4		   # preparar para imprimir uma string
         ecall		           # imprime a string
         
-        bge s10, a1, continuar_mostrac
-        add a0, zero, s10         # coloca em a0 o id da coluna atual
-        li a7, 1		  # preparar para imprimir um int
-        ecall		          # imprime um int
+        bge s10, a1, back	   # Verifica se ja imprimiu a ultima coluna e volta para aonde foi chamado
+        add a0, zero, s10          # coloca em a0 o id da coluna atual
+        li a7, 1		   # preparar para imprimir um int
+        ecall		           # imprime um int
         
-        addi s10, s10, 1	  # soma +1 na coluna
+        addi s10, s10, 1	   # soma +1 na coluna
         
-        j print_colunas		  # comeca de novo
+        j print_colunas		   # comeca de novo
 
 mostra_campo:
-	add s4, a0, zero          # salva endereco da matriz campo
-        li  t0, 4                 # define operacao de chamada
+	add s4, a0, zero           # salva endereco da matriz campo
+        li  t0, 4                  # define operacao de chamada
         
-        la  a0, mostrarCampo      # imprime mensagem para mostrar campo minado
-        li a7, 4		  # preparar para imprimir uma string
-        ecall		          # imprime a string
+        la  a0, mostrarCampo       # imprime mensagem para mostrar campo minado
+        li a7, 4		   # preparar para imprimir uma string
+        ecall		           # imprime a string
         
         li t0, 4                   # seta valor de operacao para string
         la a0, espaco              # carrega string
@@ -111,8 +112,7 @@ mostra_campo:
         add s10, zero, zero	   # carregar s10
         jal print_colunas
         
-continuar_mostrac:
-
+back:
 	# imprime nova linha
         li t0, 4                   # seta valor de operação para string
         la a0, novalinha           # carrega string
@@ -125,13 +125,14 @@ continuar_mostrac:
         li a7, 1		   # preparar para imprimir uma string
         ecall		           # imprime a string
 
-for:
+for_linha:
+	# t3 colunas e t2 linhas [ LEMBRAR ]
         addi t3, zero, -1         # reseta variavel colunas
-        beq t2, a1, exit          # verifica fim do for
+        beq t2, a1, fim           # verifica se ja percorreu toda a matriz
 
-for2:
+for_coluna:
         addi t3, t3, 1            # aumenta contador de colunas
-        beq t3, a1, exit1         # verifica fim do for2
+        beq t3, a1, fim_coluna    # verifica se ja imprimiu a ultima coluna
 	
 	addi a6, zero, 9
         mul s1, t2, a6            # posicao_matriz = y (linhas) * ordem da matriz (12)
@@ -152,20 +153,20 @@ for2:
         
         # verifica variavel de fim de jogo, caso nao termine entao continua
         addi a6, zero, 1
-        bne a3, a6, if20   
+        bne a3, a6, imprime_espaco   
         
         addi a6, zero, 9     
-        bne t5, a6, if20            # verifica se a posicao da matriz campo[x1][y1] == 9
+        bne t5, a6, imprime_espaco            # verifica se a posicao da matriz campo[x1][y1] == 9
 
         li t0, 4                   # define operacao de chamada
         la a0, bomba               # imprime valor 9 (bomba)
         li a7, 4		   # preparar para imprimir uma string
         ecall		           # imprime a string
-        j for2                     # volta para for2 porque o valor e bomba
+        j for_coluna               # volta para for_coluna porque o valor e bomba
 
-if20:
+imprime_espaco :
         addi a6, zero, -1      
-        beq s3, a6, if21           # verifica necessidade de imprimir um espaco
+        beq s3, a6, imprime_casa   # verifica necessidade de imprimir um espaco
         
         # imprime um espaco
         li t0, 4                   # define operacao de chamada
@@ -173,7 +174,7 @@ if20:
         li a7, 4		   # preparar para imprimir uma string
         ecall			   # imprime uma string
 
-if21:
+imprime_casa:
         # imprime as posicoes
         li t0, 1                   # seta valor de operacao
         add a0, s3, zero           # salva valor de s3 em a0 para ser impresso
@@ -182,9 +183,9 @@ if21:
         li a7, 1		   # preparar para imprimir um inteiro
         ecall	
 
-        j for2                      # volta para for2
+        j for_coluna               # volta para for_coluna
         
-exit1:
+fim_coluna:
         # imprime uma barra
         li t0, 4                   # seta valor de operacao para string
         la a0, espaco              # carrega string
@@ -199,13 +200,15 @@ exit1:
         
         addi t2, t2, 1             # aumenta contador de linha
         
-        bge t2, a1, for
-        add a0, zero, t2           # carrega um inteiro
-        li a7, 1		   # preparar para imprimir uma string
-        ecall		           # imprime a string
+        # como comeca em zero nao precisa imprimir o ultimo numero ( 5, 7, 9) ...
+        bge t2, a1, for_linha	   # verifica se t2 (contador de linha) e maior ou igual a1 (numero total de linhas) se for imprime o numero da linha
         
-        j for                      # volta para for
+        add a0, zero, t2           # carrega um inteiro
+        li a7, 1		   # preparar para imprimir um inteiro
+        ecall		           # imprime o inteiro
+        
+        j for_linha                # volta para for_linha
  
-exit:
+fim:
 	nop
            	
