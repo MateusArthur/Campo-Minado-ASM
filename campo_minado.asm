@@ -1,8 +1,8 @@
-# ALUNO: MATEUS ARTHUR MARCHIORI ROCHA
+# DUPLA: Édipo Antônio de Jesus e Mateus Arthur Marchiori Rocha
 
 	.data
-nivel:			.asciz		"\nEscolha um nivel:\n1 - 5x5\n2 - 7x7\n3 - 9x9\nDigite qual deseja: "
-nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido: (1) - 5x5 ou (2) - 7x7 ou (3) - 9x9!"
+nivel:			.asciz		"\nEscolha um nivel:\n1 - 8x8\n2 - 10x10\n3 - 12x12\nDigite qual deseja: "
+nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido: (1) - 8x8 ou (2) - 10x10 ou (3) - 12x12!"
 mostrarCampo:       	.asciz		"\nSeu campo minado:\n"
 espaco:             	.asciz     	" "
 hifen: 			.asciz		"-"
@@ -11,26 +11,32 @@ novalinha:	    	.asciz		"\n"
 novabarra:	    	.asciz		"|"
 
 campo:                          # Matriz controle campo minado 
-        .word   0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
+        .word   0,0,0,0,0,0,0,0,0,0,0,0
 
 interface:                  # matriz interface
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
         
 	.text
 	
@@ -46,11 +52,11 @@ main:
         add a1, zero, a0	   # Adiciona valor inserido pelo usuario em a1
         
         addi a3, zero, 1           #
-        beq a1, a3, tamanho5x5     # verifica se dificuldade e 5
+        beq a1, a3, tamanho8x8     # verifica se dificuldade e 5
         addi a3, zero, 2           # 
-        beq a1, a3, tamanho7x7     # verifica se dificuldade e 7
+        beq a1, a3, tamanho10x10     # verifica se dificuldade e 7
         addi a3, zero, 3	   # 
-        beq a1, a3, tamanho9x9     # verifica se dificuldade e 10
+        beq a1, a3, tamanho12x12     # verifica se dificuldade e 10
         
         li  t0, 4                  # define operacao de chamada
         la  a0, nivelInvalido      # imprime nivel invalido
@@ -58,16 +64,16 @@ main:
         ecall                      # imprime a string
         j main                     # volta para main pois tamanho e invalido
 
-tamanho5x5:
-	addi a1, zero, 5	   # carregar campos de acordo com nivel escolhido
+tamanho8x8:
+	addi a1, zero, 8	   # carregar campos de acordo com nivel escolhido
 	j else
 
-tamanho7x7:
-	addi a1, zero, 7	  # carregar campos de acordo com nivel escolhido
+tamanho10x10:
+	addi a1, zero, 10	  # carregar campos de acordo com nivel escolhido
 	j else
 	
-tamanho9x9:
-	addi a1, zero, 9	  # carregar campos de acordo com nivel escolhido
+tamanho12x12:
+	addi a1, zero, 12	  # carregar campos de acordo com nivel escolhido
 	
 else:                       	  # se nivel valido
         add a3, zero, zero        # seta a3 como controle de fim do jogo
@@ -88,12 +94,18 @@ print_colunas:
         ecall		           # imprime a string
         
         bge s10, a1, back	   # Verifica se ja imprimiu a ultima coluna e volta para aonde foi chamado
-        add a0, zero, s10          # coloca em a0 o id da coluna atual
+        
+        addi a6, zero, 9
+       	addi a7, zero, 1
+       	bgt s10, a6, tabulador
+       	add a6, zero, s10
+continua_coluna:
+        add a0, zero, a6          # coloca em a0 o id da coluna atual
         li a7, 1		   # preparar para imprimir um int
         ecall		           # imprime um int
         
         addi s10, s10, 1	   # soma +1 na coluna
-        
+       
         j print_colunas		   # comeca de novo
 
 mostra_campo:
@@ -121,6 +133,7 @@ back:
         
         add t2, zero, zero        # reseta variavel linhas
         
+        addi a6, zero 9
         add a0, zero, t2           # carrega um inteiro
         li a7, 1		   # preparar para imprimir uma string
         ecall		           # imprime a string
@@ -134,7 +147,7 @@ for_coluna:
         addi t3, t3, 1            # aumenta contador de colunas
         beq t3, a1, fim_coluna    # verifica se ja imprimiu a ultima coluna
 	
-	addi a6, zero, 9
+	addi a6, zero, 12	  # armazena valor da bomba
         mul s1, t2, a6            # posicao_matriz = y (linhas) * ordem da matriz (12)
         add s1, s1, t3            # posicao_matriz += x (colunas)
         
@@ -203,11 +216,25 @@ fim_coluna:
         # como comeca em zero nao precisa imprimir o ultimo numero ( 5, 7, 9) ...
         bge t2, a1, for_linha	   # verifica se t2 (contador de linha) e maior ou igual a1 (numero total de linhas) se for imprime o numero da linha
         
-        add a0, zero, t2           # carrega um inteiro
+        # Imprime id linha
+        addi a6, zero, 9
+       	bgt t2, a6, tabuladorl
+       	add a6, zero, t2
+       	
+continua_linha:
+        add a0, zero, a6           # carrega um inteiro
         li a7, 1		   # preparar para imprimir um inteiro
         ecall		           # imprime o inteiro
         
         j for_linha                # volta para for_linha
+ 
+tabulador:
+	addi a6, s10, -10
+	j continua_coluna
+	
+tabuladorl:
+	addi a6, t2, -10
+	j continua_linha
  
 fim:
 	nop
