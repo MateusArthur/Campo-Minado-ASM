@@ -20,7 +20,11 @@ campo:			.space		576
 nivel:			.asciz		"\nEscolha um nivel:\n1 - 8x8\n2 - 10x10\n3 - 12x12\nDigite qual deseja: "
 nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido: (1) - 8x8 ou (2) - 10x10 ou (3) - 12x12!"
 mostrarCampo:       	.asciz		"\nSeu campo minado:\n"
-opcoes:			.asciz		"\n1 - Abrir Posicao\n2 - Inserir Bandeira\n3 - Retirar Bandeira\n4 - Mostrar Campo"
+m_opcoes:		.asciz		"\nMenu de Opcoes:\n"
+opcoes:			.asciz		"\n1 - Abrir Posicao\n2 - Inserir Bandeira\n3 - Retirar Bandeira\n"
+digitar_linha:		.asciz		"\nDigite o numero da linha em que deseja inserir: "
+digitar_coluna:		.asciz		"\nDigite o numero da coluna em que deseja inserir: "
+erro_aberto:		.asciz		"\nERRO! Esta casa ja foi aberta!\n"
 espaco:             	.asciz     	" "
 hifen: 			.asciz		"-"
 bomba:              	.asciz     	" 9"
@@ -82,12 +86,69 @@ main_loop: # loop do jogo
         
 	jal mostra_campo      	  # printa campo minado
 	
+	
+	add  s4, a0, zero         # salva endereco da matriz campo
+	
+	li  t0, 4                  # define operacao de chamada
+        la  a0, m_opcoes       	   # imprime a escolha do nivel
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+        
 	li  t0, 4                  # define operacao de chamada
         la  a0, opcoes        	   # imprime a escolha do nivel
         li a7, 4		   # prepara para imprimir uma string
         ecall                      # imprime a string
         
+        li  t0, 5		   # prepara pra pegar valor digitado
+        li a7, 5		   # prepara para ler um inteiro
+        ecall                      # Imprime para usuario digitar tamanhao campo
+        add s6, zero, a0	   # Adiciona valor inserido pelo usuario em s6
+        
+        # Verificar opcoes
+        addi s7, zero, 1
+        beq s6,	s7, abrir_posicao  # Abrir uma Posicao
+        
 	j main_loop
+	
+abrir_posicao:	
+	li  t0, 4                  # define operacao de chamada
+        la  a0, digitar_coluna     # carrega string que desejamos imprimir
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+        
+        li  t0, 5		   # prepara pra pegar valor digitado
+        li a7, 5		   # prepara para ler um inteiro
+        ecall                      # Imprime para usuario digitar tamanhao campo
+        add s6, zero, a0	   # Adiciona valor inserido pelo usuario em s6
+        
+        li  t0, 4                  # define operacao de chamada
+        la  a0, digitar_linha      # carrega string que desejamos imprimir
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+        
+        li  t0, 5		   # prepara pra pegar valor digitado
+        li a7, 5		   # prepara para ler um inteiro
+        ecall                      # Imprime para usuario digitar tamanhao campo
+        add s7, zero, a0	   # Adiciona valor inserido pelo usuario em s7
+        
+        
+        #(linha * numero de colunas) + coluna
+        addi s5, zero, 12
+        mul s1, s6, s5         # pos = linha * 12
+        add s1, s1, s7         # pos += coluna
+        addi a5, zero, 4
+        mul s1, s1, a5         # posição_matriz *= 4 (para calcular posição)
+        
+        la a0, campo
+        add a5, a0, s1
+
+        lw  s3, (a5)     # salva endereço da posição campo
+        
+        la a2, interface
+        add a5, a2, s1
+        sw  s3, (a5)   # salva valor encontrado na matiz campo na matriz usuario
+        
+        ret
 	
 print_hifen:
 	la a0, hifen              # carrega string
@@ -190,7 +251,8 @@ for_coluna:
 
 imprime_espaco :
         addi a6, zero, -1      
-        beq s3, a6, imprime_casa   # verifica necessidade de imprimir um espaco
+        beq s3, a6, imprime_casa   # verifica necessidade de imprimir um hifen
+        bgez s3, imprime_valor 	   # verifica a necessidade de imprimir um valor
         
         # imprime um espaco
         li t0, 4                   # define operacao de chamada
@@ -200,14 +262,19 @@ imprime_espaco :
 
 imprime_casa:
         # imprime as posicoes
-        li t0, 1                   # seta valor de operacao
         add a0, s3, zero           # salva valor de s3 em a0 para ser impresso
         addi a6, zero, -1          # adicionar -1 em a6 para verificar dps
         beq a0, a6, print_hifen    # verifica se imprime o hifen
-        li a7, 1		   # preparar para imprimir um inteiro
-        ecall	
 
         j for_coluna               # volta para for_coluna
+       
+imprime_valor:
+	# Lembrar de verificar uma flag
+	add a0, zero, s3           # carrega um inteiro
+        li a7, 1		   # preparar para imprimir um inteiro
+        ecall		           # imprime o inteiro
+        
+        j for_coluna
         
 fim_coluna:
         # imprime uma barra
