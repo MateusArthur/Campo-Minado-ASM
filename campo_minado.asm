@@ -1,28 +1,6 @@
 # DUPLA: Édipo Antônio de Jesus e Mateus Arthur Marchiori Rocha
 
-	.data
-nivel:			.asciz		"\nEscolha um nivel:\n1 - 8x8\n2 - 10x10\n3 - 12x12\nDigite qual deseja: "
-nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido: (1) - 8x8 ou (2) - 10x10 ou (3) - 12x12!"
-mostrarCampo:       	.asciz		"\nSeu campo minado:\n"
-espaco:             	.asciz     	" "
-hifen: 			.asciz		"-"
-bomba:              	.asciz     	" 9"
-novalinha:	    	.asciz		"\n"
-novabarra:	    	.asciz		"|"
-
-campo:                          # Matriz controle campo minado 
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
-        .word   0,0,0,0,0,0,0,0,0,0,0,0
+		.data
 
 interface:                  # matriz interface
         .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
@@ -38,6 +16,20 @@ interface:                  # matriz interface
         .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
         .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
         
+campo:			.space		576
+nivel:			.asciz		"\nEscolha um nivel:\n1 - 8x8\n2 - 10x10\n3 - 12x12\nDigite qual deseja: "
+nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido: (1) - 8x8 ou (2) - 10x10 ou (3) - 12x12!"
+mostrarCampo:       	.asciz		"\nSeu campo minado:\n"
+opcoes:			.asciz		"\n1 - Abrir Posicao\n2 - Inserir Bandeira\n3 - Retirar Bandeira\n4 - Mostrar Campo"
+espaco:             	.asciz     	" "
+hifen: 			.asciz		"-"
+bomba:              	.asciz     	" 9"
+novalinha:	    	.asciz		"\n"
+novabarra:	    	.asciz		"|"
+salva_S0:		.word		0
+salva_ra:		.word		0
+salva_ra1:		.word		0
+        
 	.text
 	
 main:
@@ -52,11 +44,11 @@ main:
         add a1, zero, a0	   # Adiciona valor inserido pelo usuario em a1
         
         addi a3, zero, 1           #
-        beq a1, a3, tamanho8x8     # verifica se dificuldade e 5
+        beq a1, a3, tamanho8x8     # verifica se dificuldade e 8
         addi a3, zero, 2           # 
-        beq a1, a3, tamanho10x10     # verifica se dificuldade e 7
+        beq a1, a3, tamanho10x10   # verifica se dificuldade e 10
         addi a3, zero, 3	   # 
-        beq a1, a3, tamanho12x12     # verifica se dificuldade e 10
+        beq a1, a3, tamanho12x12   # verifica se dificuldade e 12
         
         li  t0, 4                  # define operacao de chamada
         la  a0, nivelInvalido      # imprime nivel invalido
@@ -76,11 +68,27 @@ tamanho12x12:
 	addi a1, zero, 12	  # carregar campos de acordo com nivel escolhido
 	
 else:                       	  # se nivel valido
-        add a3, zero, zero        # seta a3 como controle de fim do jogo
-        la a0, campo              # referencia da matriz campo 
+	la a0, campo              # referencia da matriz campo 
         la a2, interface          # referencia da matriz interface
-        jal mostra_campo      	  # printa campo minado
+        add s5, zero, a1	  # armazenar o valor de a1 pq vai ser mudado na funcao INSERE_BOMBAS
+        add a3, zero, zero        # seta a3 como controle de fim do jogo
+        add a1, a1, zero	  # parâmetro do tamanho da matriz campo
+	jal INSERE_BOMBA	  # chama função para inserir as bombas na matriz campo
+	add a1, zero, s5
+
+main_loop: # loop do jogo
+	la a0, campo              # referencia da matriz campo 
+        la a2, interface          # referencia da matriz interface
         
+	jal mostra_campo      	  # printa campo minado
+	
+	li  t0, 4                  # define operacao de chamada
+        la  a0, opcoes        	   # imprime a escolha do nivel
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+        
+	j main_loop
+	
 print_hifen:
 	la a0, hifen              # carrega string
         li a7, 4		  # preparar para imprimir uma string
@@ -95,10 +103,12 @@ print_colunas:
         
         bge s10, a1, back	   # Verifica se ja imprimiu a ultima coluna e volta para aonde foi chamado
         
+        # verificar se precisa tabular
         addi a6, zero, 9
        	addi a7, zero, 1
        	bgt s10, a6, tabulador
        	add a6, zero, s10
+       	
 continua_coluna:
         add a0, zero, a6          # coloca em a0 o id da coluna atual
         li a7, 1		   # preparar para imprimir um int
@@ -108,6 +118,7 @@ continua_coluna:
        
         j print_colunas		   # comeca de novo
 
+# void mostra_campo(int * campo[], int size_table, int * interface[], int controle)
 mostra_campo:
 	add s4, a0, zero           # salva endereco da matriz campo
         li  t0, 4                  # define operacao de chamada
@@ -122,7 +133,7 @@ mostra_campo:
         ecall		           # imprime a string
         
         add s10, zero, zero	   # carregar s10
-        jal print_colunas
+        j print_colunas
         
 back:
 	# imprime nova linha
@@ -147,7 +158,7 @@ for_coluna:
         addi t3, t3, 1            # aumenta contador de colunas
         beq t3, a1, fim_coluna    # verifica se ja imprimiu a ultima coluna
 	
-	addi a6, zero, 12	  # armazena valor da bomba
+	addi a6, zero, 12
         mul s1, t2, a6            # posicao_matriz = y (linhas) * ordem da matriz (12)
         add s1, s1, t3            # posicao_matriz += x (colunas)
         
@@ -168,8 +179,8 @@ for_coluna:
         addi a6, zero, 1
         bne a3, a6, imprime_espaco   
         
-        addi a6, zero, 9     
-        bne t5, a6, imprime_espaco            # verifica se a posicao da matriz campo[x1][y1] == 9
+        addi a6, zero, 12     
+        bne t5, a6, imprime_espaco            # verifica se a posicao da matriz campo[x1][y1] == 12
 
         li t0, 4                   # define operacao de chamada
         la a0, bomba               # imprime valor 9 (bomba)
@@ -237,5 +248,64 @@ tabuladorl:
 	j continua_linha
  
 fim:
-	nop
-           	
+	ret
+	
+INSERE_BOMBA:
+		la	t0, salva_S0
+		sw  	s0, 0 (t0)		# salva conteudo de s0 na memoria
+		la	t0, salva_ra
+		sw  	ra, 0 (t0)		# salva conteudo de ra na memoria
+		
+		add 	t0, zero, a0		# salva a0 em t0 - endereço da matriz campo
+		add 	t1, zero, a1		# salva a1 em t1 - quantidade de linhas 
+
+QTD_BOMBAS:
+		addi 	t2, zero, 15 		# seta para 15 bombas	
+		add 	t3, zero, zero 	# inicia contador de bombas com 0
+		addi 	a7, zero, 30 		# ecall 30 pega o tempo do sistema em milisegundos (usado como semente
+		ecall 				
+		add 	a1, zero, a0		# coloca a semente em a1
+INICIO_LACO:
+		beq 	t2, t3, FIM_LACO
+		add 	a0, zero, t1 		# carrega limite para %	(resto da divisão)
+		jal 	PSEUDO_RAND
+		add 	t4, zero, a0		# pega linha sorteada e coloca em t4
+		add 	a0, zero, t1 		# carrega limite para % (resto da divisão)
+   		jal 	PSEUDO_RAND
+		add 	t5, zero, a0		# pega coluna sorteada e coloca em t5
+		
+LE_POSICAO:	
+		mul  	t4, t4, t1
+		add  	t4, t4, t5  		# calcula (L * tam) + C
+		add  	t4, t4, t4  		# multiplica por 2
+		add  	t4, t4, t4  		# multiplica por 4
+		add  	t4, t4, t0  		# calcula Base + deslocamento
+		lw   	t5, 0(t4)   		# Le posicao de memoria LxC
+VERIFICA_BOMBA:		
+		addi 	t6, zero, 9		# se posição sorteada já possui bomba
+		beq  	t5, t6, PULA_ATRIB	# pula atribuição 
+		sw   	t6, 0(t4)		# senão coloca 9 (bomba) na posição
+		addi 	t3, t3, 1		# incrementa quantidade de bombas sorteadas
+PULA_ATRIB:
+		j	INICIO_LACO
+
+FIM_LACO:					# recupera registradores salvos
+		la	t0, salva_S0
+		lw  	s0, 0(t0)		# recupera conteudo de s0 da memória
+		la	t0, salva_ra
+		lw  	ra, 0(t0)		# recupera conteudo de ra da memória		
+		jr 	ra			# retorna para funcao que fez a chamada
+		
+PSEUDO_RAND:
+		addi t6, zero, 125  		# carrega constante t6 = 125
+		lui  t5, 682			# carrega constante t5 = 2796203
+		addi t5, t5, 1697 		# 
+		addi t5, t5, 1034 		# 	
+		mul  a1, a1, t6			# a = a * 125
+		rem  a1, a1, t5			# a = a % 2796203
+		rem  a0, a1, a0			# a % lim
+		bge  a0, zero, EH_POSITIVO  	# testa se valor eh positivo
+		addi s2, zero, -1           	# caso não 
+		mul  a0, a0, s2		    	# transforma em positivo
+EH_POSITIVO:	
+		ret				# retorna em a0 o valor obtido
