@@ -21,13 +21,17 @@ nivel:			.asciz		"\nEscolha um nivel:\n1 - 8x8\n2 - 10x10\n3 - 12x12\nDigite qua
 nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido: (1) - 8x8 ou (2) - 10x10 ou (3) - 12x12!"
 mostrarCampo:       	.asciz		"\nSeu campo minado:\n"
 m_opcoes:		.asciz		"\nMenu de Opcoes:\n"
-opcoes:			.asciz		"\n1 - Abrir Posicao\n2 - Inserir Bandeira\n3 - Retirar Bandeira\n"
+opcoes:			.asciz		"\n1 - Abrir Posicao\n2 - Inserir/Retirar Bandeira\nOutro - Mostrar campo\n"
 digitar_linha:		.asciz		"\nDigite o numero da linha em que deseja inserir: "
 digitar_coluna:		.asciz		"\nDigite o numero da coluna em que deseja inserir: "
 erro_aberto:		.asciz		"\nERRO! Esta casa ja foi aberta!\n"
+erro_digito:		.asciz		"\nERRO! Posicao invalida!\n"
+erro_flag:		.asciz		"\nERRO! Nao foi possivel adicionar a flag!\n"
+erro_cflag:		.asciz		"\nERRO! Nao pode abrir valor com flag!\n"
 espaco:             	.asciz     	" "
 hifen: 			.asciz		"-"
 bomba:              	.asciz     	" 9"
+flag:			.asciz		"F"
 novalinha:	    	.asciz		"\n"
 novabarra:	    	.asciz		"|"
 salva_S0:		.word		0
@@ -108,6 +112,9 @@ main_loop: # loop do jogo
         addi s7, zero, 1
         beq s6,	s7, abrir_posicao  # Abrir uma Posicao
         
+        addi s7, zero, 2
+        beq s6,	s7, case_flag  	   # Inserir/Remover uma Flag
+        
 	j main_loop
 	
 abrir_posicao:	
@@ -120,6 +127,7 @@ abrir_posicao:
         li a7, 5		   # prepara para ler um inteiro
         ecall                      # Imprime para usuario digitar tamanhao campo
         add s6, zero, a0	   # Adiciona valor inserido pelo usuario em s6
+        bgt s6, a1, valor_invalido # se coluna maior q valor maximo de coluna entao erro
         
         li  t0, 4                  # define operacao de chamada
         la  a0, digitar_linha      # carrega string que desejamos imprimir
@@ -130,7 +138,7 @@ abrir_posicao:
         li a7, 5		   # prepara para ler um inteiro
         ecall                      # Imprime para usuario digitar tamanhao campo
         add s7, zero, a0	   # Adiciona valor inserido pelo usuario em s7
-        
+        bgt s7, a1, valor_invalido # se linha maior q valor maximo de linhas entao erro
         
         #(linha * numero de colunas) + coluna
         addi s5, zero, 12
@@ -144,10 +152,124 @@ abrir_posicao:
 
         lw  s3, (a5)     # salva endereço da posição campo
         
+        # Verificar se existe uma flag
+	addi a6, zero, -1
+	blt s3, a6, com_flag
+        
         la a2, interface
         add a5, a2, s1
         sw  s3, (a5)   # salva valor encontrado na matiz campo na matriz usuario
         
+        ret
+
+com_flag:
+	li  t0, 4                  # define operacao de chamada
+        la  a0, erro_cflag         # carrega string que desejamos imprimir
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+	ret
+	
+case_flag:
+	li  t0, 4                  # define operacao de chamada
+        la  a0, digitar_coluna     # carrega string que desejamos imprimir
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+        
+        li  t0, 5		   # prepara pra pegar valor digitado
+        li a7, 5		   # prepara para ler um inteiro
+        ecall                      # Imprime para usuario digitar tamanhao campo
+        add s6, zero, a0	   # Adiciona valor inserido pelo usuario em s6
+        bgt s6, a1, valor_invalido # se coluna maior q valor maximo de coluna entao erro
+        
+        li  t0, 4                  # define operacao de chamada
+        la  a0, digitar_linha      # carrega string que desejamos imprimir
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+        
+        li  t0, 5		   # prepara pra pegar valor digitado
+        li a7, 5		   # prepara para ler um inteiro
+        ecall                      # Imprime para usuario digitar tamanhao campo
+        add s7, zero, a0	   # Adiciona valor inserido pelo usuario em s7
+        bgt s7, a1, valor_invalido # se linha maior q valor maximo de linhas entao erro
+        
+        #(linha * numero de colunas) + coluna
+        addi s5, zero, 12
+        mul s1, s6, s5         # pos = linha * 12
+        add s1, s1, s7         # pos += coluna
+        addi a5, zero, 4
+        mul s1, s1, a5         # posição_matriz *= 4 (para calcular posição)
+        
+        la a0, campo
+        add a5, a0, s1
+
+        lw  s3, (a5)     # salva endereço da posição campo
+        
+	# Verificar se a flag ja existe para remover
+	addi a6, zero, -1
+	blt s3, a6, remove_flag
+	
+	la a2, interface
+        add a5, a2, s1
+        lw  s3, (a5)
+        
+        bgez s3, bo_flag #verifica se a posição já foi aberta
+        
+	# manipular flag
+	
+	la a0, campo
+        add a5, a0, s1
+
+        lw  s3, (a5) 
+	
+	addi s3, s3, -13 	#adiciona bandeira (diminui 13 no valor presente na posição)
+	addi s9, s9, -1		#dimunui o numero de bandeiras disponiveis
+	
+	sw s3, (a5)		#salva novo valor na matriz campo
+	
+	la a2, interface
+        add a5, a2, s1
+        sw  s3, (a5)		#salva o valor na matriz usuario
+	
+	# Se nao existir coloca a flag
+        
+        ret
+        
+remove_flag:
+        la a2, interface
+        add a5, a2, s1
+        lw  s3, (a5)
+ 	
+ 	# manipular flag
+	
+	la a0, campo
+        add a5, a0, s1
+
+        lw  s3, (a5) 
+	
+	addi s3, s3, 13 	#adiciona bandeira (soma 13 no valor presente na posição)
+	#addi s9, s9, 1	#aumenta o numero de bandeiras disponiveis
+	
+	sw s3, (a5)		#salva novo valor na matriz campo
+	
+	la a2, interface
+        add a5, a2, s1
+        addi s3, s3, -1		# diminuir 1 para voltar o hifen
+        sw  s3, (a5)		# salva o valor na matriz usuario
+        
+        ret
+
+bo_flag:
+	li  t0, 4                  # define operacao de chamada
+        la  a0, erro_flag        # carrega string que desejamos imprimir
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+	ret
+	
+valor_invalido:
+	li  t0, 4                  # define operacao de chamada
+        la  a0, erro_digito        # carrega string que desejamos imprimir
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
         ret
 	
 print_hifen:
@@ -253,6 +375,7 @@ imprime_espaco :
         addi a6, zero, -1      
         beq s3, a6, imprime_casa   # verifica necessidade de imprimir um hifen
         bgez s3, imprime_valor 	   # verifica a necessidade de imprimir um valor
+        blt s3, a6, imprime_flag
         
         # imprime um espaco
         li t0, 4                   # define operacao de chamada
@@ -275,6 +398,14 @@ imprime_valor:
         ecall		           # imprime o inteiro
         
         j for_coluna
+
+imprime_flag:
+	li t0, 4                   # define operacao de chamada
+        la a0, flag                # carrega string
+        li a7, 4		   # preparar para imprimir uma string
+        ecall			   # imprime uma string
+        
+        j for_coluna
         
 fim_coluna:
         # imprime uma barra
@@ -291,7 +422,7 @@ fim_coluna:
         
         addi t2, t2, 1             # aumenta contador de linha
         
-        # como comeca em zero nao precisa imprimir o ultimo numero ( 5, 7, 9) ...
+        # como comeca em zero nao precisa imprimir o ultimo numero ( 8, 10, 12) ...
         bge t2, a1, for_linha	   # verifica se t2 (contador de linha) e maior ou igual a1 (numero total de linhas) se for imprime o numero da linha
         
         # Imprime id linha
