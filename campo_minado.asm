@@ -12,7 +12,7 @@ digitar_linha:		.asciz		"\nDigite o numero da linha em que deseja inserir: "
 digitar_coluna:		.asciz		"\nDigite o numero da coluna em que deseja inserir: "
 erro_aberto:		.asciz		"\nERRO! Esta casa ja foi aberta!\n"
 erro_digito:		.asciz		"\nERRO! Posicao invalida!\n"
-erro_flag:		.asciz		"\nERRO! Nao foi possivel adicionar a flag!\n"
+erro_flag:		.asciz		"\nERRO! Nao foi possivel adicionar a flag posicao ja aberta!\n"
 erro_cflag:		.asciz		"\nERRO! Nao pode abrir valor com flag!\n"
 aviso_perdeu:		.asciz		"\nVOCE PERDEU!\n GAME OVER!!!\n"
 espaco:             	.asciz     	" "
@@ -113,7 +113,7 @@ main_loop: # loop do jogo
 	
 abrir_posicao:	
 	li  t0, 4                  # define operacao de chamada
-        la  a0, digitar_coluna     # carrega string que desejamos imprimir
+        la  a0, digitar_linha     # carrega string que desejamos imprimir
         li a7, 4		   # prepara para imprimir uma string
         ecall                      # imprime a string
         
@@ -121,10 +121,10 @@ abrir_posicao:
         li a7, 5		   # prepara para ler um inteiro
         ecall                      # Imprime para usuario digitar tamanhao campo
         add s6, zero, a0	   # Adiciona valor inserido pelo usuario em s6
-        bgt s6, a1, valor_invalido # se coluna maior q valor maximo de coluna entao erro
+        bge s6, a1, valor_invalido # se coluna  maior ou igual q valor maximo de coluna entao erro
         
         li  t0, 4                  # define operacao de chamada
-        la  a0, digitar_linha      # carrega string que desejamos imprimir
+        la  a0, digitar_coluna     # carrega string que desejamos imprimir
         li a7, 4		   # prepara para imprimir uma string
         ecall                      # imprime a string
         
@@ -132,7 +132,7 @@ abrir_posicao:
         li a7, 5		   # prepara para ler um inteiro
         ecall                      # Imprime para usuario digitar tamanhao campo
         add s7, zero, a0	   # Adiciona valor inserido pelo usuario em s7
-        bgt s7, a1, valor_invalido # se linha maior q valor maximo de linhas entao erro
+        bge s7, a1, valor_invalido # se linha maior ou igual q valor maximo de linhas entao erro
         
         #(linha * numero de colunas) + coluna
         addi s5, zero, 12
@@ -168,7 +168,7 @@ com_flag:
 	
 case_flag:
 	li  t0, 4                  # define operacao de chamada
-        la  a0, digitar_coluna     # carrega string que desejamos imprimir
+        la  a0, digitar_linha      # carrega string que desejamos imprimir
         li a7, 4		   # prepara para imprimir uma string
         ecall                      # imprime a string
         
@@ -179,7 +179,7 @@ case_flag:
         bgt s6, a1, valor_invalido # se coluna maior q valor maximo de coluna entao erro
         
         li  t0, 4                  # define operacao de chamada
-        la  a0, digitar_linha      # carrega string que desejamos imprimir
+        la  a0, digitar_coluna     # carrega string que desejamos imprimir
         li a7, 4		   # prepara para imprimir uma string
         ecall                      # imprime a string
         
@@ -229,7 +229,7 @@ case_flag:
 	
 	# Se nao existir coloca a flag
         
-        ret
+        j mostra_campo
         
 remove_flag:
         la a2, interface
@@ -253,14 +253,14 @@ remove_flag:
         addi s3, s3, -1		# diminuir 1 para voltar o hifen
         sw  s3, (a5)		# salva o valor na matriz usuario
         
-        ret
+        j mostra_campo
 
 bo_flag:
 	li  t0, 4                  # define operacao de chamada
         la  a0, erro_flag        # carrega string que desejamos imprimir
         li a7, 4		   # prepara para imprimir uma string
         ecall                      # imprime a string
-	ret
+	j mostra_campo
 	
 valor_invalido:
 	li  t0, 4                  # define operacao de chamada
@@ -466,7 +466,7 @@ for_col_calcb:
         lw  s3, 0(s3)               # salva posicao da matriz
 
         
-        bne s3, a6, if1             # verifica se e bomba
+        bne s3, a6, if1     	    # verifica se e bomba
         j for_col_calcb             # volta para for (valor e bomba so deve mostrar o 9)
 
 if1:
@@ -542,12 +542,12 @@ if8:
         add s3, s3, a0            # calcula endereco da matriz
         lw  s3, 0(s3)             # salva posicao da matriz
 
-        beq t3, s2, continua1     # verifica se x != num_linhas
-        beq t2, s2, continua1     # verifica se y != num_linhas
-        bne s3, a6, continua1     # verifica se e bomba
+        beq t3, s2, continuar_calc     # verifica se x != num_linhas
+        beq t2, s2, continuar_calc     # verifica se y != num_linhas
+        bne s3, a6, continuar_calc     # verifica se e bomba
         addi s0, s0, 1            # i++
 
-        continua1:
+continuar_calc:
         add s3, s1, a0           # calcula endereco da matriz                   
         sw  s0, 0(s3)            # seta o valor de bombas ao redor da posicao
         j for_col_calcb          # volta para o for de colunas
@@ -567,22 +567,42 @@ case_perdeu:
         ecall                      # imprime a string
         
         j main
-       
-fim:
-	ret
-	
+
 resetar_matrizes:
 	la a0, campo
 	la a1, interface
 	
-	add a2, zero, 4 # Auxiliar de bits
-	add a3, zero, 12 # Numero de casas
-	add s0, zero, zero # contador de linhas
-
-for_res_lin:
+	addi a2, zero, 4 # Auxiliar de bits
+	addi a3, zero, 12 # Numero de casas
+	addi s0, zero, 0 # contador de linhas
 	
+	addi t0, zero, 0
+	addi t1, zero, -1
+	
+for_res_lin:
+	add s1, zero, zero # resetar contador de colunas
 	
 for_res_col:
+
+	sw t0, 0(a0)		# Inserir 0 no campo
+	sw t1, 0(a1)		# Inserir -1 na interface
+	
+	add a0, a0, a2		# proxima posicao do vetor campo
+	add a1, a1, a2		# proxima posicao do vetor interface
+	
+	addi s1, s1, 1		# coluna++
+	
+	blt s1, a3, for_res_col # se coluna for menor que 12 volta para o loop
+	
+	
+	addi s0, s0, 1		# linha ++
+	blt s0, a3, for_res_lin # enquanto s0 (contador de linhas) for menor que 12 volta para o for_res_lin
+	# se passar aqui terminou a matriz
+	       
+fim:
+	ret
+	
+
 	
 INSERE_BOMBA:
 		la	t0, salva_S0
@@ -643,10 +663,3 @@ PSEUDO_RAND:
 		mul  a0, a0, s2		    	# transforma em positivo
 EH_POSITIVO:	
 		ret				# retorna em a0 o valor obtido
-		
-		
-congela_teste:
-	li  t0, 5		   # prepara pra pegar valor digitado
-        li a7, 5		   # prepara para ler um inteiro
-        ecall                      # Imprime para usuario digitar tamanhao campo
-        add a1, zero, a0	   # Adiciona valor inserido pelo usuario em a1
