@@ -76,12 +76,18 @@ tamanho12x12:
 	addi a1, zero, 12	  # carregar campos de acordo com nivel escolhido
 	
 else:                       	  # se nivel valido
-	la a0, campo              # referencia da matriz campo 
+	la a0, campo              # referencia da matriz campo
         la a2, interface          # referencia da matriz interface
         add s5, zero, a1	  # armazenar o valor de a1 pq vai ser mudado na funcao INSERE_BOMBAS
         add a3, zero, zero        # seta a3 como controle de fim do jogo
         add a1, a1, zero	  # parâmetro do tamanho da matriz campo
 	jal INSERE_BOMBA	  # chama função para inserir as bombas na matriz campo
+	
+	la a0, campo		  # referencia a matriz campo
+	add a1, s5, zero	  # numero de linhas em a1
+	jal calcula_bombas
+
+	
 	add a1, zero, s5
 
 main_loop: # loop do jogo
@@ -142,25 +148,25 @@ abrir_posicao:
         
         #(linha * numero de colunas) + coluna
         addi s5, zero, 12
-        mul s1, s6, s5         # pos = linha * 12
-        add s1, s1, s7         # pos += coluna
-        addi a5, zero, 4
-        mul s1, s1, a5         # posição_matriz *= 4 (para calcular posição)
+        mul s1, s6, s5         	   # pos = linha * 12
+        add s1, s1, s7         	   # pos += coluna
+        addi a5, zero, 4	   # auxiliar de bits
+        mul s1, s1, a5             # posição_matriz *= 4 (para calcular posição)
         
-        la a0, campo
-        add a5, a0, s1
+        la a0, campo 		   # carrega o campo
+        add a5, a0, s1 		   # pega a posicao do indice que queremos
 
-        lw  s3, (a5)     # salva endereço da posição campo
+        lw  s3, (a5) 		   # salva endereço da posição campo
         
         # Verificar se existe uma flag
-	addi a6, zero, -1
-	blt s3, a6, com_flag
+	addi a6, zero, -1 	   # -1 e o numero da q indentifica a flag
+	blt s3, a6, com_flag       # verifica se e uma flag
         
-        la a2, interface
-        add a5, a2, s1
-        sw  s3, (a5)   # salva valor encontrado na matiz campo na matriz usuario
+        la a2, interface            # carrega a matriz interface
+        add a5, a2, s1              # pega o index da posicao
+        sw  s3, (a5)                # salva valor encontrado na matiz campo na matriz usuario
         
-        ret
+        j mostra_campo	
 
 com_flag:
 	li  t0, 4                  # define operacao de chamada
@@ -194,15 +200,15 @@ case_flag:
         
         #(linha * numero de colunas) + coluna
         addi s5, zero, 12
-        mul s1, s6, s5         # pos = linha * 12
-        add s1, s1, s7         # pos += coluna
+        mul s1, s6, s5         	   # pos = linha * 12
+        add s1, s1, s7             # pos += coluna
         addi a5, zero, 4
         mul s1, s1, a5         # posição_matriz *= 4 (para calcular posição)
         
         la a0, campo
         add a5, a0, s1
 
-        lw  s3, (a5)     # salva endereço da posição campo
+        lw  s3, (a5)     	# salva endereço da posição campo
         
 	# Verificar se a flag ja existe para remover
 	addi a6, zero, -1
@@ -444,7 +450,66 @@ tabulador:
 tabuladorl:
 	addi a6, t2, -10
 	j continua_linha
- 
+
+calcula_bombas:
+	addi t0, zero, 0	  # zerar contador de colunas
+	addi t2, zero, 4 	  # auxiliar de posicao
+	addi t3, zero, 9	  # veriicar se e bomba
+	addi s2, zero, 0
+	
+for_col_bombas:
+	addi t1, zero, 0	  	# zerar contador de linhas
+	lw a4, 0(a0)		  	# load valor atual da matriz campo
+	beq a4, t3, aumenta_redor	# se posicao for bomba pular para a proxina
+	
+for_lin_bombas:
+	addi t1, t1, 1			# aumenta contador de linhas
+	add a0, a0, t2			# passa pra proxima posicao do vetor
+	beq, t1, s5, fim_linhas 	# se posicao atual for igual a tamanho maximo da tabela termina
+	lw a4, 0(a0)			# carrega posicao do vetor
+	beq a4, t3, aumenta_redor	# se posicao for bomba pular para a proxina
+	j for_lin_bombas	
+	
+
+aumenta_redor:
+	add s2, zero, a0		# armazenar valor de a0 em s0
+	addi s4, zero, 12
+	# armazenar no anterior
+	lw t6, -4(s2)
+	beq t6, t3, for_lin_bombas	# nao pode ser igual a bomba
+	addi t6, t6, 1			# aumenta 1 bomba na casa
+	sw t6, -4(s2)			# armazenar no anterior
+	
+	# armazenar no proximo
+	lw t6, 4(s2)
+	beq t6, t3, for_lin_bombas	# nao pode ser igual a bomba
+	addi t6, t6, 1			# aumenta 1 bomba na casa
+	sw t6, 4(s2)			# armazenar no proximo
+	
+	# armazenar no de baixo
+	add s4, s4, t0			# 12 + colunas
+	addi s4, s4, 2			# diminuir 1 coluna
+	mul a5, t2, s4			# pegar proxima linha (12 + colunas * 4)
+	add s2, s2, a5			# pular para a posicao no vetor
+	
+	sw t6, 0(s2)			# armazenar o valor de baixo em t6
+	beq t6, t3, for_lin_bombas	# nao pode ser igual a bomba
+	addi t6, t6, 1			# aumenta 1 bomba na casa
+	sw t6, 0(s2)			# armazenar o valor de baixo de volta no vetor com a adicao de bomba
+	
+	j for_lin_bombas
+	#pegar posicoes da linha anterior
+	
+fim_linhas:
+	addi t0, t0, 1		  # aumentar contador de colunas
+	beq t0, s5, fim		  # percorreu tudo entao acabou
+	j for_col_bombas
+	
+aumenta_contagem:
+	addi s2, s2, 1			# aumenta a contagem das bombas na posicao atual
+	sw s2, 0(a0)
+	ret
+	
 fim:
 	ret
 	
@@ -507,3 +572,10 @@ PSEUDO_RAND:
 		mul  a0, a0, s2		    	# transforma em positivo
 EH_POSITIVO:	
 		ret				# retorna em a0 o valor obtido
+		
+		
+congela_teste:
+	li  t0, 5		   # prepara pra pegar valor digitado
+        li a7, 5		   # prepara para ler um inteiro
+        ecall                      # Imprime para usuario digitar tamanhao campo
+        add a1, zero, a0	   # Adiciona valor inserido pelo usuario em a1
