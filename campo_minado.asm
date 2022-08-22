@@ -1,21 +1,7 @@
 # DUPLA: Édipo Antônio de Jesus e Mateus Arthur Marchiori Rocha
 
 		.data
-
-interface:                  # matriz interface
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        .word   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-        
+interface:		.space          576
 campo:			.space		576
 nivel:			.asciz		"\nEscolha um nivel:\n1 - 8x8\n2 - 10x10\n3 - 12x12\nDigite qual deseja: "
 nivelInvalido:    	.asciz		"\nNivel invalido, escolha um nivel valido: (1) - 8x8 ou (2) - 10x10 ou (3) - 12x12!"
@@ -28,6 +14,7 @@ erro_aberto:		.asciz		"\nERRO! Esta casa ja foi aberta!\n"
 erro_digito:		.asciz		"\nERRO! Posicao invalida!\n"
 erro_flag:		.asciz		"\nERRO! Nao foi possivel adicionar a flag!\n"
 erro_cflag:		.asciz		"\nERRO! Nao pode abrir valor com flag!\n"
+aviso_perdeu:		.asciz		"\nVOCE PERDEU!\n GAME OVER!!!\n"
 espaco:             	.asciz     	" "
 hifen: 			.asciz		"-"
 bomba:              	.asciz     	" 9"
@@ -41,6 +28,7 @@ salva_ra1:		.word		0
 	.text
 	
 main:
+	jal resetar_matrizes	   # resetar e inicializar as matrizes	
 	li  t0, 4                  # define operacao de chamada
         la  a0, nivel        	   # imprime a escolha do nivel
         li a7, 4		   # prepara para imprimir uma string
@@ -91,13 +79,16 @@ else:                       	  # se nivel valido
 	add a1, zero, s5
 
 main_loop: # loop do jogo
-	la a0, campo              # referencia da matriz campo 
-        la a2, interface          # referencia da matriz interface
+	la a0, campo               # referencia da matriz campo 
+        la a2, interface           # referencia da matriz interface
         
-	jal mostra_campo      	  # printa campo minado
+	jal mostra_campo      	   # printa campo minado
 	
+	bgtz a3, case_perdeu	   # Verifica se perdeu para mostrar a mensagem que perdeu
+	add  s4, a0, zero          # salva endereco da matriz campo
 	
-	add  s4, a0, zero         # salva endereco da matriz campo
+	addi s7, zero, 2
+        beq s6,	s7, case_flag  	   # Inserir/Remover uma Flag
 	
 	li  t0, 4                  # define operacao de chamada
         la  a0, m_opcoes       	   # imprime a escolha do nivel
@@ -117,9 +108,6 @@ main_loop: # loop do jogo
         # Verificar opcoes
         addi s7, zero, 1
         beq s6,	s7, abrir_posicao  # Abrir uma Posicao
-        
-        addi s7, zero, 2
-        beq s6,	s7, case_flag  	   # Inserir/Remover uma Flag
         
 	j main_loop
 	
@@ -165,6 +153,9 @@ abrir_posicao:
         la a2, interface            # carrega a matriz interface
         add a5, a2, s1              # pega o index da posicao
         sw  s3, (a5)                # salva valor encontrado na matiz campo na matriz usuario
+        
+        addi s7, zero, 9 	
+        beq s3, s7, game_over 	   # Verifica se e bomba para mudar o game over
         
         j mostra_campo	
 
@@ -451,67 +442,147 @@ tabuladorl:
 	addi a6, t2, -10
 	j continua_linha
 
-calcula_bombas:
-	addi t0, zero, 0	  # zerar contador de colunas
-	addi t2, zero, 4 	  # auxiliar de posicao
-	addi t3, zero, 9	  # veriicar se e bomba
-	addi s2, zero, 0
-	
-for_col_bombas:
-	addi t1, zero, 0	  	# zerar contador de linhas
-	lw a4, 0(a0)		  	# load valor atual da matriz campo
-	beq a4, t3, aumenta_redor	# se posicao for bomba pular para a proxina
-	
-for_lin_bombas:
-	addi t1, t1, 1			# aumenta contador de linhas
-	add a0, a0, t2			# passa pra proxima posicao do vetor
-	beq, t1, s5, fim_linhas 	# se posicao atual for igual a tamanho maximo da tabela termina
-	lw a4, 0(a0)			# carrega posicao do vetor
-	beq a4, t3, aumenta_redor	# se posicao for bomba pular para a proxina
-	j for_lin_bombas	
-	
+calcula_bombas:                     
+        addi s2, a1, -1             # num_linhas - 1 (12-1)
+        addi t4, zero, 12	    # auxiliar para calcular
+        addi t5, zero, 4	    # auxiliar de bits
+        addi a6, zero, 9	    # auxiliar para calcular
+        add t2, zero, zero          # reseta variavel linhas
 
-aumenta_redor:
-	add s2, zero, a0		# armazenar valor de a0 em s0
-	addi s4, zero, 12
-	# armazenar no anterior
-	lw t6, -4(s2)
-	beq t6, t3, for_lin_bombas	# nao pode ser igual a bomba
-	addi t6, t6, 1			# aumenta 1 bomba na casa
-	sw t6, -4(s2)			# armazenar no anterior
+for_lin_calcb:
+        addi t3, zero, -1           # reseta variavel colunas
+        beq t2, a1, fim             # percorreu todas as linhas e colunas
+
+for_col_calcb:
+        add s0, zero, zero          # resetar o contador de bombas
+        addi t3, t3, 1              # aumenta contador de colunas (colunas++)
+        beq t3, a1, fim2            # verifica fim do laco
+
+        mul s1, t2, t4              # posicao_matriz = linhas * 12
+        add s1, s1, t3              # posicao_matriz + colunas
+        mul s1, s1, t5              # calculo da posicao
+
+        add s3, s1, a0              # calcula endereco da matriz campo
+        lw  s3, 0(s3)               # salva posicao da matriz
+
+        
+        bne s3, a6, if1             # verifica se e bomba
+        j for_col_calcb             # volta para for (valor e bomba so deve mostrar o 9)
+
+if1:
+        addi s3, s1, -4            # posicao_matriz - 4 ([x-1][y])
+        addi s3, s3, -48           # posicao_matriz - 48 ([x-1][y-1])
+        add s3, a0, s3             # calcula enderecoo da matriz
+        lw  s3, 0(s3)              # salva posicao da matriz
+        beqz t2, if2               # verifica y != 0
+        beqz t3, if2               # verifica x != 0
+        bne s3, a6, if2            # verifica se e bomba
+        addi s0, s0, 1             # i++
+
+if2:
+        addi s3, s1, -48          # posicao_matriz - 48 ([x][y-1])
+        add s3, s3, a0            # calcula endereco da matriz
+        lw  s3, 0(s3)             # salva posicao da matriz
+        beqz t2, if3              # verifica y != 0
+        bne s3, a6, if3           # verifica se e bomba
+        addi s0, s0, 1            # i++
+
+if3:
+        addi s3, s1, 4            # posicao_matriz + 4 ([x+1][y])
+        addi s3, s3, -48          # posicao_matriz - 48 (M[x+1][y-1])
+        add s3, s3, a0            # calcula endereco da matriz
+        lw  s3, 0(s3)             # salva posicao da matriz
+        
+        beq t3, s2, if4           # verifica x != num_linhas
+        beqz t2, if4              # verifica y != 0
+        bne s3, a6, if4           # verifica se e bomba
+        addi s0, s0, 1            # i++
+
+if4:
+        addi s3, s1, -4           # posicao_matriz - 4 ([x-1][y]) 
+        add s3, s3, a0            # calcula endereco da matriz
+        lw  s3, 0(s3)             # salva posicao da matriz
+        
+        beqz t3, if5              # verifica x != 0
+        bne s3, a6, if5           # verifica se e bomba
+        addi s0, s0, 1            # i++
+
+if5:
+        addi s3, s1, 4            # posicao_matriz + 4 ([x+1][y]) 
+        add s3, s3, a0            # calcula endereco da matriz
+        lw  s3, 0(s3)             # salva posicao da matriz
+        
+        beq t3, s2, if6           # verifica x != num_linhas
+        bne s3, a6, if6           # verifica se e bomba
+        addi s0, s0, 1            # i++
+
+if6:
+        addi s3, s1, -4           # posicao_matriz - 4 ([x-1][y])
+        addi s3, s3, 48           # posicao_matriz + 48 ([x-1][y+1])
+        add s3, s3, a0            # calcula endereco da matriz
+        lw  s3, 0(s3)             # salva posicao da matriz
+
+        beqz t3, if7              # verifica x != 0
+        beq t2, s2, if7           # verifica y != num_linhas
+        bne s3, a6, if7           # verifica se e bomba
+        addi s0, s0, 1            # i++
+
+if7:
+        addi s3, s1, 48           # posicao_matriz + 48 ([x][y+1])
+        add s3, s3, a0            # calcula endereco da matriz
+        lw  s3, 0(s3)             # salva posicao da matriz
+        
+        beq t2, s2, if8           # verifica y != num_linhas
+        bne s3, a6, if8           # verifica se e bomba
+        addi s0, s0, 1            # i++
+
+if8:
+        addi s3, s1, 4            # posicao_matriz + 4 ([x+1][y])
+        addi s3, s3, 48           # posicao_matriz + 48 ([x+1][y+1])
+        add s3, s3, a0            # calcula endereco da matriz
+        lw  s3, 0(s3)             # salva posicao da matriz
+
+        beq t3, s2, continua1     # verifica se x != num_linhas
+        beq t2, s2, continua1     # verifica se y != num_linhas
+        bne s3, a6, continua1     # verifica se e bomba
+        addi s0, s0, 1            # i++
+
+        continua1:
+        add s3, s1, a0           # calcula endereco da matriz                   
+        sw  s0, 0(s3)            # seta o valor de bombas ao redor da posicao
+        j for_col_calcb          # volta para o for de colunas
+
+fim2:
+        addi t2, t2, 1            # aumenta contador de linhas da matriz
+        j for_lin_calcb           # volta para o for de linhas
+        
+game_over:
+	addi a3, zero, 1
+	j mostra_campo
 	
-	# armazenar no proximo
-	lw t6, 4(s2)
-	beq t6, t3, for_lin_bombas	# nao pode ser igual a bomba
-	addi t6, t6, 1			# aumenta 1 bomba na casa
-	sw t6, 4(s2)			# armazenar no proximo
-	
-	# armazenar no de baixo
-	add s4, s4, t0			# 12 + colunas
-	addi s4, s4, 2			# diminuir 1 coluna
-	mul a5, t2, s4			# pegar proxima linha (12 + colunas * 4)
-	add s2, s2, a5			# pular para a posicao no vetor
-	
-	sw t6, 0(s2)			# armazenar o valor de baixo em t6
-	beq t6, t3, for_lin_bombas	# nao pode ser igual a bomba
-	addi t6, t6, 1			# aumenta 1 bomba na casa
-	sw t6, 0(s2)			# armazenar o valor de baixo de volta no vetor com a adicao de bomba
-	
-	j for_lin_bombas
-	#pegar posicoes da linha anterior
-	
-fim_linhas:
-	addi t0, t0, 1		  # aumentar contador de colunas
-	beq t0, s5, fim		  # percorreu tudo entao acabou
-	j for_col_bombas
-	
-aumenta_contagem:
-	addi s2, s2, 1			# aumenta a contagem das bombas na posicao atual
-	sw s2, 0(a0)
-	ret
-	
+case_perdeu:
+	li  t0, 4                  # define operacao de chamada
+        la  a0, aviso_perdeu       # imprime a escolha do nivel
+        li a7, 4		   # prepara para imprimir uma string
+        ecall                      # imprime a string
+        
+        j main
+       
 fim:
 	ret
+	
+resetar_matrizes:
+	la a0, campo
+	la a1, interface
+	
+	add a2, zero, 4 # Auxiliar de bits
+	add a3, zero, 12 # Numero de casas
+	add s0, zero, zero # contador de linhas
+
+for_res_lin:
+	
+	
+for_res_col:
 	
 INSERE_BOMBA:
 		la	t0, salva_S0
