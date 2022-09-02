@@ -1,4 +1,4 @@
-# DUPLA: Édipo Antônio de Jesus e Mateus Arthur Marchiori Rocha
+# DUPLA: Mateus Arthur Marchiori Rocha
 
 		.data
 interface:		.space          576
@@ -156,8 +156,8 @@ abrir_posicao:
         
         addi s7, zero, 9 	
         beq s3, s7, game_over 	   # Verifica se e bomba para mudar o game over
-        
-        j mostra_campo	
+        addi s6, zero, 0	   # resetar variavel para voltar para main certo
+        j mostra_campo
 
 com_flag:
 	li  t0, 4                  # define operacao de chamada
@@ -228,7 +228,7 @@ case_flag:
         sw  s3, (a5)		#salva o valor na matriz usuario
 	
 	# Se nao existir coloca a flag
-        
+        addi s6, zero, 0	   # resetar variavel para voltar para main certo
         j mostra_campo
         
 remove_flag:
@@ -253,6 +253,7 @@ remove_flag:
         addi s3, s3, -1		# diminuir 1 para voltar o hifen
         sw  s3, (a5)		# salva o valor na matriz usuario
         
+        addi s6, zero, 0	   # resetar variavel para voltar para main certo
         j mostra_campo
 
 bo_flag:
@@ -368,7 +369,7 @@ for_coluna:
         ecall		           # imprime a string
         j for_coluna               # volta para for_coluna porque o valor e bomba
 
-imprime_espaco :
+imprime_espaco:
         addi a6, zero, -1      
         beq s3, a6, imprime_casa   # verifica necessidade de imprimir um hifen
         bgez s3, imprime_valor 	   # verifica a necessidade de imprimir um valor
@@ -469,9 +470,12 @@ for_col_calcb:
         bne s3, a6, if1     	    # verifica se e bomba
         j for_col_calcb             # volta para for (valor e bomba so deve mostrar o 9)
 
+#	Y X X
+#	X P X
+#	X X X
 if1:
         addi s3, s1, -4            # posicao_matriz - 4 ([x-1][y])
-        addi s3, s3, -48           # posicao_matriz - 48 ([x-1][y-1])
+        addi s3, s3, -48           # posicao_matriz - 48 ([x-1][y-1])   
         add s3, a0, s3             # calcula enderecoo da matriz
         lw  s3, 0(s3)              # salva posicao da matriz
         beqz t2, if2               # verifica y != 0
@@ -479,14 +483,20 @@ if1:
         bne s3, a6, if2            # verifica se e bomba
         addi s0, s0, 1             # i++
 
+#	X Y X
+#	X P X
+#	X X X
 if2:
-        addi s3, s1, -48          # posicao_matriz - 48 ([x][y-1])
+        addi s3, s1, -48          # posicao_matriz - 48 ([x][y-1])   
         add s3, s3, a0            # calcula endereco da matriz
         lw  s3, 0(s3)             # salva posicao da matriz
         beqz t2, if3              # verifica y != 0
         bne s3, a6, if3           # verifica se e bomba
         addi s0, s0, 1            # i++
 
+#	X X Y
+#	X P X
+#	X X X
 if3:
         addi s3, s1, 4            # posicao_matriz + 4 ([x+1][y])
         addi s3, s3, -48          # posicao_matriz - 48 (M[x+1][y-1])
@@ -498,6 +508,10 @@ if3:
         bne s3, a6, if4           # verifica se e bomba
         addi s0, s0, 1            # i++
 
+#	X X X
+#	Y P X
+#	X X X
+
 if4:
         addi s3, s1, -4           # posicao_matriz - 4 ([x-1][y]) 
         add s3, s3, a0            # calcula endereco da matriz
@@ -506,6 +520,10 @@ if4:
         beqz t3, if5              # verifica x != 0
         bne s3, a6, if5           # verifica se e bomba
         addi s0, s0, 1            # i++
+
+#	X X X
+#	X P Y
+#	X X X
 
 if5:
         addi s3, s1, 4            # posicao_matriz + 4 ([x+1][y]) 
@@ -516,6 +534,10 @@ if5:
         bne s3, a6, if6           # verifica se e bomba
         addi s0, s0, 1            # i++
 
+
+#	X X X
+#	X P X
+#	Y X X
 if6:
         addi s3, s1, -4           # posicao_matriz - 4 ([x-1][y])
         addi s3, s3, 48           # posicao_matriz + 48 ([x-1][y+1])
@@ -527,6 +549,10 @@ if6:
         bne s3, a6, if7           # verifica se e bomba
         addi s0, s0, 1            # i++
 
+
+#	X X X
+#	X P X
+#	X Y X
 if7:
         addi s3, s1, 48           # posicao_matriz + 48 ([x][y+1])
         add s3, s3, a0            # calcula endereco da matriz
@@ -536,6 +562,9 @@ if7:
         bne s3, a6, if8           # verifica se e bomba
         addi s0, s0, 1            # i++
 
+#	X X X
+#	X P X
+#	X X Y
 if8:
         addi s3, s1, 4            # posicao_matriz + 4 ([x+1][y])
         addi s3, s3, 48           # posicao_matriz + 48 ([x+1][y+1])
