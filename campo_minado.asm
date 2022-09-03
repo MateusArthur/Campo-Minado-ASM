@@ -237,20 +237,16 @@ remove_flag:
         lw  s3, (a5)
  	
  	# manipular flag
-	
 	la a0, campo
         add a5, a0, s1
 
         lw  s3, (a5) 
-	
 	addi s3, s3, 13 	#adiciona bandeira (soma 13 no valor presente na posição)
-	#addi s9, s9, 1	#aumenta o numero de bandeiras disponiveis
-	
 	sw s3, (a5)		#salva novo valor na matriz campo
 	
 	la a2, interface
         add a5, a2, s1
-        addi s3, s3, -1		# diminuir 1 para voltar o hifen
+        addi s3, zero, -1	# seta -1 matriz usuario para voltar o hifen
         sw  s3, (a5)		# salva o valor na matriz usuario
         
         addi s6, zero, 0	   # resetar variavel para voltar para main certo
@@ -258,7 +254,7 @@ remove_flag:
 
 bo_flag:
 	li  t0, 4                  # define operacao de chamada
-        la  a0, erro_flag        # carrega string que desejamos imprimir
+        la  a0, erro_flag          # carrega string que desejamos imprimir
         li a7, 4		   # prepara para imprimir uma string
         ecall                      # imprime a string
 	j mostra_campo
